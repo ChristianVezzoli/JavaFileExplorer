@@ -29,4 +29,8 @@ public class Controller {
     public void goToParentDir() {
         model.goToParentDir();
     }
+
+    public void getFiles() {
+        model.sendFilesToView();
+    }
 }

@@ -41,23 +41,27 @@ public class Model {
         currentFileIndex = 0;
         parentDir = dir.getParentFile();
 
-        // call to draw
-        view.drawFiles(files.stream().map(File::getName).toList(), currentFileIndex);
+        this.sendFilesToView();
     }
 
+    /** Calls view to draw the files */
+    public void sendFilesToView()
+    {
+        view.drawFiles(files.stream().map(File::getName).toList(), currentFileIndex);
+    }
 
     public void selectNextFile() {
         if (files.isEmpty())
             return;
         currentFileIndex = (currentFileIndex + 1) % files.size();
-        view.drawFiles(files.stream().map(File::getName).toList(), currentFileIndex);
+        this.sendFilesToView();
     }
 
     public void selectPreviousFile() {
         if (files.isEmpty())
             return;
         currentFileIndex = (currentFileIndex - 1 + files.size()) % files.size();
-        view.drawFiles(files.stream().map(File::getName).toList(), currentFileIndex);
+        this.sendFilesToView();
     }
 
     public void goToSelectedDir() {

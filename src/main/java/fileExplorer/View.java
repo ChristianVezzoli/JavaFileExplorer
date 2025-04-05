@@ -18,7 +18,10 @@ public class View {
     private Screen screen;
     private final TextGraphics text;
 
+    public boolean END_OF_PROGRAM = false;
+
     private final int SIDE_OFFSET = 1;
+    private final int DRAW_THRESHOLD = 5;
 
     public View(Controller controller) {
         this.controller = controller;
@@ -32,22 +35,34 @@ public class View {
         text = screen.newTextGraphics();
     }
 
+    public void checkForScreenSizeChange() {
+        while (!END_OF_PROGRAM) {
+            if (screen.doResizeIfNecessary() != null) {
+                if (screen.getTerminalSize().getRows() < DRAW_THRESHOLD || screen.getTerminalSize().getColumns() < DRAW_THRESHOLD)
+                    continue;
+                this.flushScreen();
+                this.drawGUI();
+                controller.getFiles();
+            }
+        }
+    }
 
     public void viewMain() throws IOException {
 
+       this.drawGUI();
+       controller.startingLoadFiles();
 
-        this.drawGUI();
+       // If the screen is resized, redraw the screen (so it in a thread so the main is not blocked)
+       new Thread(this::checkForScreenSizeChange).start();
 
-        controller.startingLoadFiles();
-
-        while (true) {
+        while (!END_OF_PROGRAM) {
 
             // read input
             KeyStroke keyStroke = screen.readInput();
 
             // Esc -> quit
             if (keyStroke.getKeyType() == KeyType.Escape)
-                break;
+                END_OF_PROGRAM = true;
                 // j -> next file
             else if (keyStroke.getCharacter() == 'j')
                 controller.selectNextFile();
@@ -61,8 +76,14 @@ public class View {
             else if (keyStroke.getCharacter() == 'h')
                 controller.goToParentDir();
         }
+
     }
 
+    public void flushScreen() {
+        for (int i = 0; i < screen.getTerminalSize().getRows() - 1; i++) {
+            text.putString(0, i, " ".repeat(screen.getTerminalSize().getColumns() - 1));
+        }
+    }
 
     public void drawGUI() {
 
