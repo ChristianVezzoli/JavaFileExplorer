@@ -19,7 +19,7 @@ public class Controller {
     }
 
     public void startingLoadFiles() {
-        model.loadFiles(DEFAULT_DIR);
+        model.loadCurrentDirectoryFiles();
     }
 
     public void goToSelectedDir() {

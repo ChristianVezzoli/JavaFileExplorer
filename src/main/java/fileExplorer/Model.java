@@ -11,68 +11,72 @@ public class Model {
     // access view
     private View view;
 
-    private File parentDir;
-    private List<File> files;
+    private File currentDirectory;
+    private File parentDirectory;
+    private List<File> currentDirFiles;
     private int currentFileIndex;
 
     public Model() {
-        files = new ArrayList<>();
+        currentDirFiles = new ArrayList<>();
+        currentDirectory = new File(System.getProperty("user.home"));
+        parentDirectory = currentDirectory.getParentFile();
     }
 
     public void setView(View view) {
         this.view = view;
     }
 
-    public void loadFiles(String path) {
-        File dir = new File(path);
+    public void loadCurrentDirectoryFiles() {
 
         // if file is not directory or is root, do nothing
-        File[] filesArr = dir.listFiles();
+        File[] filesArr = currentDirectory.listFiles();
         if (filesArr == null) {
             return;
         }
 
-        files.clear();
-        files.addAll(Arrays.stream(filesArr)
+        currentDirFiles.clear();
+        currentDirFiles.addAll(Arrays.stream(filesArr)
                 // order by name
                 .sorted(Comparator.comparing(File::getName))
                 .toList());
 
-        currentFileIndex = 0;
-        parentDir = dir.getParentFile();
-
         this.sendFilesToView();
     }
 
-    /** Calls view to draw the files */
-    public void sendFilesToView()
-    {
-        view.drawFiles(files.stream().map(File::getName).toList(), currentFileIndex);
+    /** Calls view to draw the currentDirFiles */
+    public void sendFilesToView() {
+        view.drawFiles(currentDirFiles.stream().map(File::getName).toList(), currentFileIndex);
     }
 
     public void selectNextFile() {
-        if (files.isEmpty())
+        if (currentDirFiles.isEmpty())
             return;
-        currentFileIndex = (currentFileIndex + 1) % files.size();
+        currentFileIndex = (currentFileIndex + 1) % currentDirFiles.size();
         this.sendFilesToView();
     }
 
     public void selectPreviousFile() {
-        if (files.isEmpty())
+        if (currentDirFiles.isEmpty())
             return;
-        currentFileIndex = (currentFileIndex - 1 + files.size()) % files.size();
+        currentFileIndex = (currentFileIndex - 1 + currentDirFiles.size()) % currentDirFiles.size();
         this.sendFilesToView();
     }
 
     public void goToSelectedDir() {
-        if (files.isEmpty())
+        if (currentDirFiles.isEmpty())
             return;
-        loadFiles(files.get(currentFileIndex).getPath());
+        parentDirectory = currentDirectory;
+        currentDirectory = currentDirFiles.get(currentFileIndex);
+        currentFileIndex = 0;
+        loadCurrentDirectoryFiles();
     }
 
     public void goToParentDir() {
-        if (parentDir == null)
+        if (parentDirectory == null)
             return;
-        loadFiles(parentDir.getPath());
+        currentDirectory = parentDirectory;
+        parentDirectory = parentDirectory.getParentFile();
+        currentFileIndex = 0;
+        loadCurrentDirectoryFiles();
     }
 }
