@@ -66,12 +66,16 @@ public class View {
                 // Esc -> quit
                 if (keyStroke.getKeyType() == KeyType.Escape ||
                         // if the terminal window is closed
-                        keyStroke.getKeyType() == KeyType.EOF) {
+                        keyStroke.getKeyType() == KeyType.EOF ||
+                        // CTRL D
+                        (keyStroke.isCtrlDown() &&
+                                keyStroke.getCharacter() == 'd')
+                ) {
                     END_OF_PROGRAM = true;
                     System.exit(0);
                 }
                 // j -> next file
-                else if (keyStroke.getCharacter() == 'j')
+                else if (keyStroke.isCtrlDown() || keyStroke.getCharacter() == 'j')
                     controller.selectNextFile();
                     // k -> previous file
                 else if (keyStroke.getCharacter() == 'k')
