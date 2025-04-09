@@ -4,8 +4,6 @@ public class Controller {
 
     private Model model;
 
-    private final String DEFAULT_DIR = System.getProperty("user.home");
-
     public Controller(Model model) {
         this.model = model;
     }
@@ -19,7 +17,7 @@ public class Controller {
     }
 
     public void startingLoadFiles() {
-        model.loadCurrentDirectoryFiles();
+        model.loadFiles();
     }
 
     public void goToSelectedDir() {
@@ -31,6 +29,6 @@ public class Controller {
     }
 
     public void getFiles() {
-        model.sendFilesToView();
+        model.getFiles();
     }
 }

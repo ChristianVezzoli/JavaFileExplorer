@@ -12,15 +12,21 @@ import java.util.List;
 
 public class View {
 
-    /// Access to controller
+    // access to controller
     private final Controller controller;
 
+    // graphics
     private Screen screen;
     private final TextGraphics text;
 
+    // is the program over
     public boolean END_OF_PROGRAM = false;
 
-    private final int SIDE_OFFSET = 1;
+    // size of every section: parent (left), current, file (right) -> the current is calculated by the other 2
+    private final int PARENT_SIZE = 3; //one third
+    private final int FILE_SIZE = 3; // onw third
+
+    // if terminal is smaller than this, do not update
     private final int DRAW_THRESHOLD = 5;
 
     public View(Controller controller) {
@@ -41,7 +47,6 @@ public class View {
                 if (screen.getTerminalSize().getRows() < DRAW_THRESHOLD || screen.getTerminalSize().getColumns() < DRAW_THRESHOLD)
                     continue;
                 this.flushScreen();
-                this.drawGUI();
                 controller.getFiles();
             }
         }
@@ -49,7 +54,6 @@ public class View {
 
     public void viewMain() throws IOException {
 
-       this.drawGUI();
        controller.startingLoadFiles();
 
        // If the screen is resized, redraw the screen (so it in a thread so the main is not blocked)
@@ -80,93 +84,101 @@ public class View {
     }
 
     public void flushScreen() {
-        for (int i = 0; i < screen.getTerminalSize().getRows() - 1; i++) {
-            text.putString(0, i, " ".repeat(screen.getTerminalSize().getColumns() - 1));
+        for (int i = 0; i < screen.getTerminalSize().getRows(); i++) {
+            text.putString(0, i, " ".repeat(screen.getTerminalSize().getColumns()));
         }
     }
 
-    public void drawGUI() {
+    public void redrawParentDirectoryFiles(List<String> files, int currentFileIndex) {
 
-        // hide cursor
-        screen.setCursorPosition(null);
+        int startCol = 0;
+        int endCol = screen.getTerminalSize().getColumns() / PARENT_SIZE;
 
-        // set rows
-        for (int i = 0; i < screen.getTerminalSize().getRows() - 1; i++) {
-            text.setCharacter(0, i, '|');
-            text.setCharacter(screen.getTerminalSize().getColumns() - 1, i, '|');
-        }
+        // flush old files
+        for (int i = 0; i < screen.getTerminalSize().getRows(); i++)
+            text.putString(startCol, i, " ".repeat(endCol - startCol));
 
-        // set columns
-        for (int i = 0; i < screen.getTerminalSize().getColumns() - 1; i++) {
-            text.setCharacter(i, 0, '-');
-            text.setCharacter(i, screen.getTerminalSize().getRows() - 1, '-');
-        }
-
-        // set corners
-        text.setCharacter(0, 0, '*');
-        text.setCharacter(0, screen.getTerminalSize().getRows() - 1, '*');
-        text.setCharacter(screen.getTerminalSize().getColumns() - 1, 0, '*');
-        text.setCharacter(screen.getTerminalSize().getColumns() - 1, screen.getTerminalSize().getRows() - 1, '*');
-
-        // draw title
-        String title = "File Explorer";
-        text.setBackgroundColor(TextColor.ANSI.GREEN);
-        text.putString((screen.getTerminalSize().getColumns() - 1) / 2 - title.length() / 2, 0, title);
-        text.setBackgroundColor(TextColor.ANSI.DEFAULT);
-
-        try {
-            screen.refresh();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-    }
-
-    public void flushFiles() {
-        for (int i = SIDE_OFFSET; i < screen.getTerminalSize().getRows() - 1 - SIDE_OFFSET; i++) {
-            text.putString(SIDE_OFFSET, i, " ".repeat(screen.getTerminalSize().getColumns() - 1 - 2 * SIDE_OFFSET));
-        }
-    }
-
-    /// take all the files and draw them in the filesWindow
-    public void drawFiles(List<String> files, int currentFileIndex) {
-        //flush old files
-        this.flushFiles();
-
-        if (files.isEmpty()) {
-            try {
-                screen.refresh();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+        if (files == null || files.isEmpty() || currentFileIndex < 0) {
+            try {screen.refresh();} catch (IOException e) {e.printStackTrace();}
             return;
         }
 
-        // half the size of the screen
-        int halfSize = (screen.getTerminalSize().getRows() - 1) / 2;
+        // draw new files
+        int halfRow = screen.getTerminalSize().getRows() / 2;
 
         // put the current file
         text.setBackgroundColor(TextColor.ANSI.WHITE);
         text.setForegroundColor(TextColor.ANSI.BLACK);
-        text.putString(SIDE_OFFSET, halfSize, files.get(currentFileIndex));
+        text.putString(startCol, halfRow, files.get(currentFileIndex).length() < endCol - startCol ?
+                files.get(currentFileIndex) :
+                files.get(currentFileIndex).substring(0, endCol - startCol));
         text.setBackgroundColor(TextColor.ANSI.DEFAULT);
         text.setForegroundColor(TextColor.ANSI.DEFAULT);
 
         // put the files before -> checks that the files are in bound of the half screen and the list
-        for (int i = halfSize - 1; i > SIDE_OFFSET &&
-                currentFileIndex - halfSize + i >= 0; i--)
-            text.putString(SIDE_OFFSET, i, files.get(currentFileIndex - halfSize + i));
+        for (int i = halfRow - 1; i >= 0 &&
+                currentFileIndex - halfRow + i >= 0; i--)
+            text.putString(startCol, i, files.get(currentFileIndex - halfRow + i).length() < endCol - startCol ?
+                    files.get(currentFileIndex - halfRow + i) :
+                    files.get(currentFileIndex - halfRow + i).substring(0, endCol - startCol));
 
         // put the files afterwards -> checks that the files are in bound of the half screen and the list
-        for (int i = halfSize + 1; i < screen.getTerminalSize().getRows() - 1 - SIDE_OFFSET &&
-                currentFileIndex - halfSize + i < files.size(); i++)
-            text.putString(SIDE_OFFSET, i, files.get(currentFileIndex - halfSize + i));
+        for (int i = halfRow + 1; i < screen.getTerminalSize().getRows() &&
+                currentFileIndex - halfRow + i < files.size(); i++)
+            text.putString(startCol, i, files.get(currentFileIndex - halfRow + i).length() < endCol - startCol ?
+                    files.get(currentFileIndex - halfRow + i) :
+                    files.get(currentFileIndex - halfRow + i).substring(0, endCol - startCol));
+        try {
+            screen.refresh();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
-        // update
+    }
+
+    public void redrawCurrentDirectoryFiles(List<String> files, int currentFileIndex) {
+        int startCol = screen.getTerminalSize().getColumns() / PARENT_SIZE;
+        int endCol = screen.getTerminalSize().getColumns() - screen.getTerminalSize().getColumns() / FILE_SIZE;
+
+        // flush old files
+        for (int i = 0; i < screen.getTerminalSize().getColumns(); i++)
+            text.putString(startCol, i, " ".repeat(endCol - startCol));
+
+        if (files.isEmpty() || currentFileIndex < 0) {
+            try {screen.refresh();} catch (IOException e) {e.printStackTrace();}
+            return;
+        }
+
+        // draw new files
+        int halfRow = screen.getTerminalSize().getRows() / 2;
+
+        // put the current file
+        text.setBackgroundColor(TextColor.ANSI.WHITE);
+        text.setForegroundColor(TextColor.ANSI.BLACK);
+        text.putString(startCol, halfRow, files.get(currentFileIndex).length() < endCol - startCol ?
+                files.get(currentFileIndex) :
+                files.get(currentFileIndex).substring(0, endCol - startCol));
+        text.setBackgroundColor(TextColor.ANSI.DEFAULT);
+        text.setForegroundColor(TextColor.ANSI.DEFAULT);
+
+        // put the files before -> checks that the files are in bound of the half screen and the list
+        for (int i = halfRow - 1; i >= 0 &&
+                currentFileIndex - halfRow + i >= 0; i--)
+            text.putString(startCol, i, files.get(currentFileIndex - halfRow + i).length() < endCol - startCol ?
+                    files.get(currentFileIndex - halfRow + i) :
+                    files.get(currentFileIndex - halfRow + i).substring(0, endCol - startCol));
+
+        // put the files afterwards -> checks that the files are in bound of the half screen and the list
+        for (int i = halfRow + 1; i < screen.getTerminalSize().getRows() &&
+                currentFileIndex - halfRow + i < files.size(); i++)
+            text.putString(startCol, i, files.get(currentFileIndex - halfRow + i).length() < endCol - startCol ?
+                    files.get(currentFileIndex - halfRow + i) :
+                    files.get(currentFileIndex - halfRow + i).substring(0, endCol - startCol));
         try {
             screen.refresh();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
+
 }
