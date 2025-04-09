@@ -3,6 +3,7 @@ package fileExplorer;
 import com.googlecode.lanterna.terminal.swing.TerminalScrollController;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -152,5 +153,10 @@ public class Model {
 
         this.overwriteCurrentDirectoryFiles();
         this.overwriteParentDirectoryFiles();
+    }
+
+    public void openFileManager() throws IOException {
+        String[] args = new String[]{"xdg-open", currentFile.toString()};
+        new ProcessBuilder(args).start();
     }
 }

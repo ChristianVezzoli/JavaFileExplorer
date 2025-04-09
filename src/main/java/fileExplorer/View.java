@@ -53,32 +53,40 @@ public class View {
     }
 
     public void viewMain() throws IOException {
+        controller.startingLoadFiles();
 
-       controller.startingLoadFiles();
-
-       // If the screen is resized, redraw the screen (so it in a thread so the main is not blocked)
-       new Thread(this::checkForScreenSizeChange).start();
+        // If the screen is resized, redraw the screen (so it in a thread so the main is not blocked)
+        new Thread(this::checkForScreenSizeChange).start();
 
         while (!END_OF_PROGRAM) {
-
             // read input
             KeyStroke keyStroke = screen.readInput();
 
-            // Esc -> quit
-            if (keyStroke.getKeyType() == KeyType.Escape)
-                END_OF_PROGRAM = true;
+            try {
+                // Esc -> quit
+                if (keyStroke.getKeyType() == KeyType.Escape ||
+                        // if the terminal window is closed
+                        keyStroke.getKeyType() == KeyType.EOF) {
+                    END_OF_PROGRAM = true;
+                    System.exit(0);
+                }
                 // j -> next file
-            else if (keyStroke.getCharacter() == 'j')
-                controller.selectNextFile();
-                // k -> previous file
-            else if (keyStroke.getCharacter() == 'k')
-                controller.selectPreviousFile();
-                // enter selected dir
-            else if (keyStroke.getCharacter() == 'l')
-                controller.goToSelectedDir();
-                // go to parent dir
-            else if (keyStroke.getCharacter() == 'h')
-                controller.goToParentDir();
+                else if (keyStroke.getCharacter() == 'j')
+                    controller.selectNextFile();
+                    // k -> previous file
+                else if (keyStroke.getCharacter() == 'k')
+                    controller.selectPreviousFile();
+                    // enter selected dir
+                else if (keyStroke.getCharacter() == 'l')
+                    controller.goToSelectedDir();
+                    // go to parent dir
+                else if (keyStroke.getCharacter() == 'h')
+                    controller.goToParentDir();
+                else if (keyStroke.getKeyType() == KeyType.Enter)
+                    controller.openFileManager();
+            } catch (NullPointerException _) {
+                System.err.println("Pressed an unexpected key: " + keyStroke.getKeyType());
+            }
         }
 
     }
@@ -99,7 +107,11 @@ public class View {
             text.putString(startCol, i, " ".repeat(endCol - startCol));
 
         if (files == null || files.isEmpty() || currentFileIndex < 0) {
-            try {screen.refresh();} catch (IOException e) {e.printStackTrace();}
+            try {
+                screen.refresh();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
             return;
         }
 
@@ -145,7 +157,11 @@ public class View {
             text.putString(startCol, i, " ".repeat(endCol - startCol));
 
         if (files.isEmpty() || currentFileIndex < 0) {
-            try {screen.refresh();} catch (IOException e) {e.printStackTrace();}
+            try {
+                screen.refresh();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
             return;
         }
 

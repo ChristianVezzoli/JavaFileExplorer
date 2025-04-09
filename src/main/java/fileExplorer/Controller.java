@@ -1,5 +1,7 @@
 package fileExplorer;
 
+import java.io.IOException;
+
 public class Controller {
 
     private Model model;
@@ -30,5 +32,9 @@ public class Controller {
 
     public void getFiles() {
         model.getFiles();
+    }
+
+    public void openFileManager() throws IOException {
+        model.openFileManager();
     }
 }
