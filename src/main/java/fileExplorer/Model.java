@@ -137,12 +137,16 @@ public class Model {
     }
 
     public void sendParentDirectoryFilesToView() {
-        view.redrawParentDirectoryFiles(parentDirectoryFiles.stream().map(File::getName).collect(Collectors.toList()),
+        view.redrawParentDirectoryFiles(parentDirectoryFiles.stream()
+                        .map(file -> new ViewFilePair(file.getName(), file.isDirectory()))
+                        .collect(Collectors.toList()),
                 parentDirectoryFiles.indexOf(currentDirectory));
     }
 
     public void sendCurrentDirectoryFilesToView() {
-        view.redrawCurrentDirectoryFiles(currentDirectoryFiles.stream().map(File::getName).collect(Collectors.toList()),
+        view.redrawCurrentDirectoryFiles(currentDirectoryFiles.stream()
+                        .map(file -> new ViewFilePair(file.getName(), file.isDirectory()))
+                        .collect(Collectors.toList()),
                 currentDirectoryFiles.indexOf(currentFile));
     }
 
