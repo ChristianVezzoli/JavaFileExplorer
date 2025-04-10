@@ -1,7 +1,5 @@
 package fileExplorer;
 
-import com.googlecode.lanterna.terminal.swing.TerminalScrollController;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -52,6 +50,7 @@ public class Model {
     public void loadFiles() {
         overwriteCurrentDirectoryFiles();
         overwriteParentDirectoryFiles();
+        overwriteCurrentFileContents();
     }
 
     private void overwriteParentDirectoryFiles() {
@@ -96,15 +95,20 @@ public class Model {
 
     private void overwriteCurrentFileContents() {
         currentFileContents = "";
-        try {
-            Scanner scanner = new Scanner(currentFile);
-            while (scanner.hasNextLine()) {
-                currentFileContents += (scanner.nextLine() + "\n");
+        if (currentFile != null) {
+            if(currentFile.isFile()) {
+                try {
+                    Scanner scanner = new Scanner(currentFile);
+                    while (scanner.hasNextLine()) {
+                        currentFileContents += (scanner.nextLine() + "\n");
+                    }
+                } catch (Exception e) {
+                    currentFileContents = "CAN'T READ FILE";
+                }
+            } else {
+                currentFileContents = "DIRECTORY";
             }
-        } catch (Exception e) {
-            currentFileContents = "CAN'T READ FILE";
         }
-
         this.sendCurrentFileContentsToView();
     }
 
@@ -154,8 +158,8 @@ public class Model {
     }
 
     public void goToSelectedDir() {
-        // if the file is not a directory, do nothing
-        if (currentFile == null || !currentFile.isDirectory())
+        // if the file is not a directory or can't read it, do nothing
+        if (currentFile == null || !currentFile.isDirectory() || !currentFile.canRead())
             return;
 
         parentDirectory = currentDirectory;

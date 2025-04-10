@@ -64,22 +64,19 @@ public class View {
         new Thread(this::checkForScreenSizeChange).start();
 
         while (!END_OF_PROGRAM) {
-            // read input
-            KeyStroke keyStroke = screen.readInput();
-
             try {
+                // read input
+                KeyStroke keyStroke = screen.readInput();
+
                 // Esc -> quit
                 if (keyStroke.getKeyType() == KeyType.Escape ||
                         // if the terminal window is closed
                         keyStroke.getKeyType() == KeyType.EOF ||
                         // CTRL D
                         (keyStroke.isCtrlDown() &&
-                                keyStroke.getCharacter() == 'd')
-                ) {
+                                keyStroke.getCharacter() == 'd'))
                     END_OF_PROGRAM = true;
-                    System.exit(0);
-                }
-                // j -> next file
+                    // j -> next file
                 else if (keyStroke.isCtrlDown() || keyStroke.getCharacter() == 'j')
                     controller.selectNextFile();
                     // k -> previous file
@@ -93,11 +90,10 @@ public class View {
                     controller.goToParentDir();
                 else if (keyStroke.getKeyType() == KeyType.Enter)
                     controller.openFileManager();
-            } catch (NullPointerException _) {
-                System.err.println("Pressed an unexpected key: " + keyStroke.getKeyType());
+            } catch (Exception e) {
+                System.err.println("Pressed an unexpected key");
             }
         }
-
     }
 
     public void flushScreen() {
@@ -115,6 +111,7 @@ public class View {
         for (int i = 0; i < screen.getTerminalSize().getRows(); i++)
             text.putString(startCol, i, " ".repeat(endCol - startCol));
 
+        // if file is empty, draw nothing
         if (files == null || files.isEmpty() || currentFileIndex < 0) {
             try {
                 screen.refresh();
@@ -127,28 +124,26 @@ public class View {
         // draw new files
         int halfRow = screen.getTerminalSize().getRows() / 2;
 
-        // put the current file
-        text.setBackgroundColor(TextColor.ANSI.WHITE);
-        text.setForegroundColor(TextColor.ANSI.BLACK);
-        text.putString(startCol, halfRow, files.get(currentFileIndex).length() < endCol - startCol ?
-                files.get(currentFileIndex) :
-                files.get(currentFileIndex).substring(0, endCol - startCol));
-        text.setBackgroundColor(TextColor.ANSI.DEFAULT);
-        text.setForegroundColor(TextColor.ANSI.DEFAULT);
+        // print files
+        for (int i = Math.max(halfRow - currentFileIndex, 0);
+                i < (Math.min(halfRow + files.size() - currentFileIndex, 2 * halfRow));
+                i++) {
 
-        // put the files before -> checks that the files are in bound of the half screen and the list
-        for (int i = halfRow - 1; i >= 0 &&
-                currentFileIndex - halfRow + i >= 0; i--)
+            // mark currently selected file (it's at halfRow)
+            if (i == halfRow){
+                text.setBackgroundColor(TextColor.ANSI.WHITE);
+                text.setForegroundColor(TextColor.ANSI.BLACK);
+            }
             text.putString(startCol, i, files.get(currentFileIndex - halfRow + i).length() < endCol - startCol ?
                     files.get(currentFileIndex - halfRow + i) :
                     files.get(currentFileIndex - halfRow + i).substring(0, endCol - startCol));
+            if (i == halfRow){
+                text.setBackgroundColor(TextColor.ANSI.DEFAULT);
+                text.setForegroundColor(TextColor.ANSI.DEFAULT);
+            }
+        }
 
-        // put the files afterwards -> checks that the files are in bound of the half screen and the list
-        for (int i = halfRow + 1; i < screen.getTerminalSize().getRows() &&
-                currentFileIndex - halfRow + i < files.size(); i++)
-            text.putString(startCol, i, files.get(currentFileIndex - halfRow + i).length() < endCol - startCol ?
-                    files.get(currentFileIndex - halfRow + i) :
-                    files.get(currentFileIndex - halfRow + i).substring(0, endCol - startCol));
+        // update screen
         try {
             screen.refresh();
         } catch (IOException e) {

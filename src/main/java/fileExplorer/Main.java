@@ -9,5 +9,8 @@ public class Main {
         model.setView(view);
 
         try {view.viewMain(); } catch (Exception e) {e.printStackTrace();}
+
+        // exit
+        System.exit(0);
     }
 }
