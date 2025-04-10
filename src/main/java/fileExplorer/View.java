@@ -8,6 +8,8 @@ import com.googlecode.lanterna.screen.Screen;
 import com.googlecode.lanterna.terminal.DefaultTerminalFactory;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class View {
@@ -23,8 +25,11 @@ public class View {
     public boolean END_OF_PROGRAM = false;
 
     // size of every section: parent (left), current, file (right) -> the current is calculated by the other 2
-    private final int PARENT_SIZE = 3; //one third
-    private final int FILE_SIZE = 3; // onw third
+    private final int PARENT_SIZE = 5; //one fifth
+    private final int FILE_SIZE = 2; // half
+
+    // when reading file preview, tabs become the specified number of spaces
+    private final int TABS_SPACES = 4;
 
     // if terminal is smaller than this, do not update
     private final int DRAW_THRESHOLD = 5;
@@ -199,6 +204,44 @@ public class View {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public void redrawCurrentFileContents(String fileContents) {
+
+        int startCol = screen.getTerminalSize().getColumns() - screen.getTerminalSize().getColumns() / FILE_SIZE;
+        int endCol = screen.getTerminalSize().getColumns();
+
+        // sanitize input from control characters
+        // replace tabs with spaces
+        fileContents = fileContents.replaceAll("\t", " ".repeat(TABS_SPACES));
+        // remove every control character that is not \n
+        fileContents = fileContents.replaceAll("[\\x00-\\x09\\x0b\\x0c\\x0e-\\x1f\\x7f]", "");
+
+
+        List<String> lines = Arrays.stream(fileContents.split("\n"))
+                .flatMap(line -> {
+                    List<String> subLines = new ArrayList<>();
+                    for (int i = 0; i < line.length(); i+=(endCol - startCol))
+                        subLines.add(line.substring(i, Math.min(i + (endCol - startCol), line.length())));
+                    return subLines.stream();
+                })
+                .toList();
+
+        // flush old file
+        for (int i = 0; i < screen.getTerminalSize().getRows(); i++)
+            text.putString(startCol, i, " ".repeat(endCol - startCol));
+
+        // draw file contents
+        for (int i = 0; i < (Math.min(lines.size(), screen.getTerminalSize().getRows())); i++)
+            text.putString(startCol, i, lines.get(i));
+
+        try {
+            screen.refresh();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
     }
 
 }

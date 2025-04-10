@@ -18,6 +18,7 @@ public class Model {
     private File currentDirectory;
     private List<File> currentDirectoryFiles;
     private File currentFile;
+    private String currentFileContents;
 
     // comparator
     Comparator<File> comparator;
@@ -32,8 +33,14 @@ public class Model {
         // get first currentFile
         try {
             currentFile = Arrays.stream(currentDirectory.listFiles()).sorted(comparator).toList().getFirst();
-        } catch (NullPointerException e) {
+            Scanner scanner = new Scanner(currentFile);
+            while (scanner.hasNextLine()) {
+                currentFileContents += scanner.nextLine();
+            }
+
+        } catch (Exception e) {
             currentFile = null;
+            currentFileContents = "CAN'T READ FILE";
         }
 
     }
@@ -47,7 +54,7 @@ public class Model {
         overwriteParentDirectoryFiles();
     }
 
-    public void overwriteParentDirectoryFiles() {
+    private void overwriteParentDirectoryFiles() {
 
         if (parentDirectory == null) {
             parentDirectoryFiles.clear();
@@ -70,7 +77,7 @@ public class Model {
         this.sendParentDirectoryFilesToView();
     }
 
-    public void overwriteCurrentDirectoryFiles() {
+    private void overwriteCurrentDirectoryFiles() {
 
         // take new files
         File[] filesArray = currentDirectory.listFiles();
@@ -87,11 +94,27 @@ public class Model {
         this.sendCurrentDirectoryFilesToView();
     }
 
+    private void overwriteCurrentFileContents() {
+        currentFileContents = "";
+        try {
+            Scanner scanner = new Scanner(currentFile);
+            while (scanner.hasNextLine()) {
+                currentFileContents += (scanner.nextLine() + "\n");
+            }
+        } catch (Exception e) {
+            currentFileContents = "CAN'T READ FILE";
+        }
+
+        this.sendCurrentFileContentsToView();
+    }
+
     /** transforms the current file into its next */
     public void selectNextFile() {
         if (currentDirectoryFiles.isEmpty())
             return;
         currentFile = currentDirectoryFiles.get((currentDirectoryFiles.indexOf(currentFile) + 1) % currentDirectoryFiles.size());
+
+        this.overwriteCurrentFileContents();
 
         // update view
         this.sendCurrentDirectoryFilesToView();
@@ -102,6 +125,8 @@ public class Model {
         if (currentDirectoryFiles.isEmpty())
             return;
         currentFile = currentDirectoryFiles.get((currentDirectoryFiles.indexOf(currentFile) - 1 + currentDirectoryFiles.size()) % currentDirectoryFiles.size());
+
+        this.overwriteCurrentFileContents();
 
         // update view
         this.sendCurrentDirectoryFilesToView();
@@ -117,10 +142,15 @@ public class Model {
                 currentDirectoryFiles.indexOf(currentFile));
     }
 
+    public void sendCurrentFileContentsToView() {
+        view.redrawCurrentFileContents(currentFileContents);
+    }
+
     /** Send files, when requested by view */
     public void getFiles() {
         this.sendCurrentDirectoryFilesToView();
         this.sendParentDirectoryFilesToView();
+        this.sendCurrentFileContentsToView();
     }
 
     public void goToSelectedDir() {
@@ -138,7 +168,7 @@ public class Model {
 
         this.overwriteParentDirectoryFiles();
         this.overwriteCurrentDirectoryFiles();
-
+        this.overwriteCurrentFileContents();
 
     }
 
@@ -153,6 +183,7 @@ public class Model {
 
         this.overwriteCurrentDirectoryFiles();
         this.overwriteParentDirectoryFiles();
+        this.overwriteCurrentFileContents();
     }
 
     public void openFileManager() throws IOException {
