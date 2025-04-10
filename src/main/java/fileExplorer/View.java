@@ -9,10 +9,7 @@ import com.googlecode.lanterna.screen.Screen;
 import com.googlecode.lanterna.terminal.DefaultTerminalFactory;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.EnumSet;
-import java.util.List;
+import java.util.*;
 
 public class View {
 
@@ -26,6 +23,10 @@ public class View {
     // is the program over
     public boolean END_OF_PROGRAM = false;
 
+    /* CUSTOMIZABLE */
+    // if terminal is smaller than this, do not update
+    private final int DRAW_THRESHOLD = 5;
+
     // size of every section: parent (left), current, file (right) -> the current is calculated by the other 2
     private final int PARENT_SIZE = 5; //one fifth
     private final int FILE_SIZE = 2; // half
@@ -33,8 +34,8 @@ public class View {
     // when reading file preview, tabs become the specified number of spaces
     private final int TABS_SPACES = 4;
 
-    // if terminal is smaller than this, do not update
-    private final int DRAW_THRESHOLD = 5;
+    // time between refresh for screen size update
+    private final int REFRESH_TIME_MILLIS = 500;
 
     public View(Controller controller) {
         this.controller = controller;
@@ -56,6 +57,12 @@ public class View {
                 this.flushScreen();
                 controller.getFiles();
             }
+            try {
+                Thread.sleep(REFRESH_TIME_MILLIS);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
         }
     }
 
