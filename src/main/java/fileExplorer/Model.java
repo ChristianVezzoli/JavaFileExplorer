@@ -105,8 +105,15 @@ public class Model {
                 } catch (Exception e) {
                     currentFileContents = "CAN'T READ FILE";
                 }
-            } else {
-                currentFileContents = "DIRECTORY";
+            } else if (currentFile.isDirectory()) {
+                if (currentFile.canRead()) {
+                    currentFileContents = Arrays.stream(currentFile.listFiles())
+                            .sorted(comparator)
+                            .map(File::getName)
+                            .reduce("", (a, b) -> a + "\n" + b);
+                } else {
+                    currentFileContents = "CAN'T READ DIRECTORY";
+                }
             }
         }
         this.sendCurrentFileContentsToView();

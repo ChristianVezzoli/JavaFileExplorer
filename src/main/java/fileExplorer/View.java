@@ -8,7 +8,10 @@ import com.googlecode.lanterna.input.KeyType;
 import com.googlecode.lanterna.screen.Screen;
 import com.googlecode.lanterna.terminal.DefaultTerminalFactory;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.lang.invoke.LambdaConversionException;
 import java.util.*;
 
 public class View {
@@ -23,21 +26,73 @@ public class View {
     // is the program over
     public boolean END_OF_PROGRAM = false;
 
-    /* CUSTOMIZABLE */
     // if terminal is smaller than this, do not update
     private final int DRAW_THRESHOLD = 5;
 
+    /* CUSTOMIZABLE */
     // size of every section: parent (left), current, file (right) -> the current is calculated by the other 2
-    private final int PARENT_SIZE = 5; //one fifth
-    private final int FILE_SIZE = 2; // half
+    private int PARENT_SIZE = 5; //one fifth
+    private int FILE_SIZE = 2; // half
+
+    private TextColor FILE_BACKGROUND_DEFAULT = TextColor.ANSI.DEFAULT;
+    private TextColor FILE_BACKGROUND_CURRENT = TextColor.ANSI.WHITE;
+    private TextColor FILE_FOREGROUND_DEFAULT = TextColor.ANSI.DEFAULT;
+    private TextColor FILE_FOREGROUND_CURRENT = TextColor.ANSI.BLACK;
 
     // when reading file preview, tabs become the specified number of spaces
-    private final int TABS_SPACES = 4;
+    private int TABS_SPACES = 4;
 
     // time between refresh for screen size update
-    private final int REFRESH_TIME_MILLIS = 500;
+    private int REFRESH_TIME_MILLIS = 500;
 
-    public View(Controller controller) {
+    public View(Controller controller) throws Exception {
+        // read config
+        File configFile = new File(System.getProperty("user.home") + "/.config/fileExplorer.conf");
+        try {
+            Scanner scanner = new Scanner(configFile);
+            // read config file
+            while (scanner.hasNextLine()) {
+                String config = scanner.nextLine();
+                String variable = config.split("=")[0].toUpperCase();
+                // ignore empty lines and comments
+                if (variable.isEmpty() || variable.startsWith("//"))
+                    continue;
+                String value = config.split("=")[1].toUpperCase();
+                switch (variable) {
+                    case "PARENT_SIZE":
+                        PARENT_SIZE = Integer.parseInt(value);
+                        break;
+                    case "FILE_SIZE":
+                        FILE_SIZE = Integer.parseInt(value);
+                        break;
+                    case "FILE_BACKGROUND_DEFAULT":
+                        FILE_BACKGROUND_DEFAULT = TextColor.ANSI.valueOf(value);
+                        break;
+                    case "FILE_BACKGROUND_CURRENT":
+                        FILE_BACKGROUND_CURRENT = TextColor.ANSI.valueOf(value);
+                        break;
+                    case "FILE_FOREGROUND_DEFAULT":
+                        FILE_FOREGROUND_DEFAULT = TextColor.ANSI.valueOf(value);
+                        break;
+                    case "FILE_FOREGROUND_CURRENT":
+                        FILE_FOREGROUND_CURRENT = TextColor.ANSI.valueOf(value);
+                        break;
+                    case "TABS_SPACES":
+                        TABS_SPACES = Integer.parseInt(value);
+                        break;
+                    case "REFRESH_TIME_MILLIS":
+                        REFRESH_TIME_MILLIS = Integer.parseInt(value);
+                        break;
+                    default:
+                        throw new IllegalArgumentException();
+                }
+            }
+        } catch (FileNotFoundException e) {
+            System.out.println("Config file not found. Using default values.");
+        } catch (Exception e) {
+            throw new Exception("Error in Config file");
+        }
+
         this.controller = controller;
         // initialize
         try {
@@ -140,8 +195,8 @@ public class View {
 
             // mark currently selected file (it's at halfRow)
             if (i == halfRow){
-                text.setBackgroundColor(TextColor.ANSI.WHITE);
-                text.setForegroundColor(TextColor.ANSI.BLACK);
+                text.setBackgroundColor(FILE_BACKGROUND_CURRENT);
+                text.setForegroundColor(FILE_FOREGROUND_CURRENT);
             }
 
             // folder are bold
@@ -154,8 +209,8 @@ public class View {
                     files.get(currentFileIndex - halfRow + i).fileName.substring(0, endCol - startCol));
 
             // reset modifiers
-            text.setBackgroundColor(TextColor.ANSI.DEFAULT);
-            text.setForegroundColor(TextColor.ANSI.DEFAULT);
+            text.setBackgroundColor(FILE_BACKGROUND_DEFAULT);
+            text.setForegroundColor(FILE_FOREGROUND_DEFAULT);
             text.disableModifiers(SGR.BOLD);
         }
 
@@ -197,8 +252,8 @@ public class View {
 
             // mark currently selected file (it's at halfRow)
             if (i == halfRow){
-                text.setBackgroundColor(TextColor.ANSI.WHITE);
-                text.setForegroundColor(TextColor.ANSI.BLACK);
+                text.setBackgroundColor(FILE_BACKGROUND_CURRENT);
+                text.setForegroundColor(FILE_FOREGROUND_CURRENT);
             }
 
             // folder are bold
@@ -211,8 +266,8 @@ public class View {
                     files.get(currentFileIndex - halfRow + i).fileName.substring(0, endCol - startCol));
 
             // reset colors
-            text.setBackgroundColor(TextColor.ANSI.DEFAULT);
-            text.setForegroundColor(TextColor.ANSI.DEFAULT);
+            text.setBackgroundColor(FILE_BACKGROUND_DEFAULT);
+            text.setForegroundColor(FILE_FOREGROUND_DEFAULT);
             text.disableModifiers(SGR.BOLD);
         }
 
