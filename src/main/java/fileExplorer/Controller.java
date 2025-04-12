@@ -13,7 +13,14 @@ public class Controller {
     }
 
     public void selectNextFile() {
+        // interrupt old thread and wait for it to terminate
         thread.interrupt();
+        try {
+            thread.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        // issue new instruction
         thread = new Thread(() -> {
             model.selectNextFile();
         });
@@ -21,7 +28,14 @@ public class Controller {
     }
 
     public void selectPreviousFile() {
+        // interrupt old thread and wait for it to terminate
         thread.interrupt();
+        try {
+            thread.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        // issue new instruction
         thread = new Thread(() -> {
             model.selectPreviousFile();
         });
@@ -36,7 +50,14 @@ public class Controller {
     }
 
     public void goToSelectedDir() {
+        // interrupt old thread and wait for it to terminate
         thread.interrupt();
+        try {
+            thread.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        // issue new instruction
         thread = new Thread(() -> {
             model.goToSelectedDir();
         });
@@ -44,7 +65,14 @@ public class Controller {
     }
 
     public void goToParentDir() {
+         // interrupt old thread and wait for it to terminate
         thread.interrupt();
+        try {
+            thread.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        // issue new instruction
         thread = new Thread(() -> {
             model.goToParentDir();
         });
@@ -52,7 +80,14 @@ public class Controller {
     }
 
     public void getFiles() {
+        // interrupt old thread and wait for it to terminate
         thread.interrupt();
+        try {
+            thread.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        // issue new instruction
         thread = new Thread(() -> {
             model.getFiles();
         });
@@ -60,7 +95,14 @@ public class Controller {
     }
 
     public void openFileManager() throws IOException {
+        // interrupt old thread and wait for it to terminate
         thread.interrupt();
+        try {
+            thread.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        // issue new instruction
         thread = new Thread(() -> {
             model.openFileManager();
         });
