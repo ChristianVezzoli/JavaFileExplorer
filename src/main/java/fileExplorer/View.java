@@ -45,53 +45,20 @@ public class View {
     // time between refresh for screen size update
     private int REFRESH_TIME_MILLIS = 500;
 
-    public View(Controller controller) throws Exception {
-        // read config
-        File configFile = new File(System.getProperty("user.home") + "/.config/fileExplorer.conf");
-        try {
-            Scanner scanner = new Scanner(configFile);
-            // read config file
-            while (scanner.hasNextLine()) {
-                String config = scanner.nextLine();
-                String variable = config.split("=")[0].toUpperCase();
-                // ignore empty lines and comments
-                if (variable.isEmpty() || variable.startsWith("//"))
-                    continue;
-                String value = config.split("=")[1].toUpperCase();
-                switch (variable) {
-                    case "PARENT_SIZE":
-                        PARENT_SIZE = Integer.parseInt(value);
-                        break;
-                    case "FILE_SIZE":
-                        FILE_SIZE = Integer.parseInt(value);
-                        break;
-                    case "FILE_BACKGROUND_DEFAULT":
-                        FILE_BACKGROUND_DEFAULT = TextColor.ANSI.valueOf(value);
-                        break;
-                    case "FILE_BACKGROUND_CURRENT":
-                        FILE_BACKGROUND_CURRENT = TextColor.ANSI.valueOf(value);
-                        break;
-                    case "FILE_FOREGROUND_DEFAULT":
-                        FILE_FOREGROUND_DEFAULT = TextColor.ANSI.valueOf(value);
-                        break;
-                    case "FILE_FOREGROUND_CURRENT":
-                        FILE_FOREGROUND_CURRENT = TextColor.ANSI.valueOf(value);
-                        break;
-                    case "TABS_SPACES":
-                        TABS_SPACES = Integer.parseInt(value);
-                        break;
-                    case "REFRESH_TIME_MILLIS":
-                        REFRESH_TIME_MILLIS = Integer.parseInt(value);
-                        break;
-                    default:
-                        throw new IllegalArgumentException();
-                }
-            }
-        } catch (FileNotFoundException e) {
-            System.out.println("Config file not found. Using default values.");
-        } catch (Exception e) {
-            throw new Exception("Error in Config file");
-        }
+    public View(Controller controller,
+                int parentSize, int fileSize,
+                int tabsSpaces, int refreshTimeMillis,
+                TextColor fileBackgroundDefault, TextColor fileForegroundDefault,
+                TextColor fileBackgroundCurrent, TextColor fileForegroundCurrent) {
+
+        PARENT_SIZE = parentSize;
+        FILE_SIZE = fileSize;
+        FILE_BACKGROUND_DEFAULT = fileBackgroundDefault;
+        FILE_FOREGROUND_DEFAULT = fileForegroundDefault;
+        FILE_BACKGROUND_CURRENT = fileBackgroundCurrent;
+        FILE_FOREGROUND_CURRENT = fileForegroundCurrent;
+        TABS_SPACES = tabsSpaces;
+        REFRESH_TIME_MILLIS = refreshTimeMillis;
 
         this.controller = controller;
         // initialize
