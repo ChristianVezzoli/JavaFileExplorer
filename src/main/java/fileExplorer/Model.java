@@ -10,6 +10,8 @@ public class Model {
     // access view
     private View view;
 
+    private int MAX_CURRENT_FILE_CONTENTS_SIZE = 50;
+
     // model attributes
     private File parentDirectory;
     private List<File> parentDirectoryFiles;
@@ -21,7 +23,10 @@ public class Model {
     // comparator
     Comparator<File> comparator;
 
-    public Model() {
+    public Model(int maxCurrentFileContentsSize) {
+
+        MAX_CURRENT_FILE_CONTENTS_SIZE = maxCurrentFileContentsSize;
+
         parentDirectoryFiles = new ArrayList<>();
         currentDirectoryFiles = new ArrayList<>();
         currentDirectory = new File(System.getProperty("user.home"));
@@ -99,9 +104,9 @@ public class Model {
             if(currentFile.isFile()) {
                 try {
                     Scanner scanner = new Scanner(currentFile);
-                    while (scanner.hasNextLine()) {
+                    // limit the number of lines to the value in config
+                    for (int i = 0; i < MAX_CURRENT_FILE_CONTENTS_SIZE && scanner.hasNextLine(); i++)
                         currentFileContents += (scanner.nextLine() + "\n");
-                    }
                 } catch (Exception e) {
                     currentFileContents = "CAN'T READ FILE";
                 }
@@ -109,7 +114,7 @@ public class Model {
                 if (currentFile.canRead()) {
                     currentFileContents = Arrays.stream(currentFile.listFiles())
                             .sorted(comparator)
-                            .map(File::getName)
+                            .map(file -> file.isFile() ? file.getName() : "DIR: " + file.getName())
                             .reduce("", (a, b) -> a + "\n" + b);
                 } else {
                     currentFileContents = "CAN'T READ DIRECTORY";
@@ -201,8 +206,12 @@ public class Model {
         this.overwriteCurrentFileContents();
     }
 
-    public void openFileManager() throws IOException {
+    public void openFileManager() {
         String[] args = new String[]{"xdg-open", currentFile.toString()};
-        new ProcessBuilder(args).start();
+        try {
+            new ProcessBuilder(args).start();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

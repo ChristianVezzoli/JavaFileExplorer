@@ -45,53 +45,20 @@ public class View {
     // time between refresh for screen size update
     private int REFRESH_TIME_MILLIS = 500;
 
-    public View(Controller controller) throws Exception {
-        // read config
-        File configFile = new File(System.getProperty("user.home") + "/.config/fileExplorer.conf");
-        try {
-            Scanner scanner = new Scanner(configFile);
-            // read config file
-            while (scanner.hasNextLine()) {
-                String config = scanner.nextLine();
-                String variable = config.split("=")[0].toUpperCase();
-                // ignore empty lines and comments
-                if (variable.isEmpty() || variable.startsWith("//"))
-                    continue;
-                String value = config.split("=")[1].toUpperCase();
-                switch (variable) {
-                    case "PARENT_SIZE":
-                        PARENT_SIZE = Integer.parseInt(value);
-                        break;
-                    case "FILE_SIZE":
-                        FILE_SIZE = Integer.parseInt(value);
-                        break;
-                    case "FILE_BACKGROUND_DEFAULT":
-                        FILE_BACKGROUND_DEFAULT = TextColor.ANSI.valueOf(value);
-                        break;
-                    case "FILE_BACKGROUND_CURRENT":
-                        FILE_BACKGROUND_CURRENT = TextColor.ANSI.valueOf(value);
-                        break;
-                    case "FILE_FOREGROUND_DEFAULT":
-                        FILE_FOREGROUND_DEFAULT = TextColor.ANSI.valueOf(value);
-                        break;
-                    case "FILE_FOREGROUND_CURRENT":
-                        FILE_FOREGROUND_CURRENT = TextColor.ANSI.valueOf(value);
-                        break;
-                    case "TABS_SPACES":
-                        TABS_SPACES = Integer.parseInt(value);
-                        break;
-                    case "REFRESH_TIME_MILLIS":
-                        REFRESH_TIME_MILLIS = Integer.parseInt(value);
-                        break;
-                    default:
-                        throw new IllegalArgumentException();
-                }
-            }
-        } catch (FileNotFoundException e) {
-            System.out.println("Config file not found. Using default values.");
-        } catch (Exception e) {
-            throw new Exception("Error in Config file");
-        }
+    public View(Controller controller,
+                int parentSize, int fileSize,
+                int tabsSpaces, int refreshTimeMillis,
+                TextColor fileBackgroundDefault, TextColor fileForegroundDefault,
+                TextColor fileBackgroundCurrent, TextColor fileForegroundCurrent) {
+
+        PARENT_SIZE = parentSize;
+        FILE_SIZE = fileSize;
+        FILE_BACKGROUND_DEFAULT = fileBackgroundDefault;
+        FILE_FOREGROUND_DEFAULT = fileForegroundDefault;
+        FILE_BACKGROUND_CURRENT = fileBackgroundCurrent;
+        FILE_FOREGROUND_CURRENT = fileForegroundCurrent;
+        TABS_SPACES = tabsSpaces;
+        REFRESH_TIME_MILLIS = refreshTimeMillis;
 
         this.controller = controller;
         // initialize
@@ -169,7 +136,7 @@ public class View {
     public void redrawParentDirectoryFiles(List<ViewFilePair> files, int currentFileIndex) {
 
         int startCol = 0;
-        int endCol = screen.getTerminalSize().getColumns() / PARENT_SIZE;
+        int endCol = screen.getTerminalSize().getColumns() / PARENT_SIZE - 1;
 
         // flush old files
         for (int i = 0; i < screen.getTerminalSize().getRows(); i++)
@@ -192,7 +159,6 @@ public class View {
         for (int i = Math.max(halfRow - currentFileIndex, 0);
                 i < (Math.min(halfRow + files.size() - currentFileIndex, 2 * halfRow));
                 i++) {
-
             // mark currently selected file (it's at halfRow)
             if (i == halfRow){
                 text.setBackgroundColor(FILE_BACKGROUND_CURRENT);
@@ -212,6 +178,10 @@ public class View {
             text.setBackgroundColor(FILE_BACKGROUND_DEFAULT);
             text.setForegroundColor(FILE_FOREGROUND_DEFAULT);
             text.disableModifiers(SGR.BOLD);
+
+            // if thread is interrupted, return here so that the colors are set to default
+            if (Thread.currentThread().isInterrupted())
+                return;
         }
 
 
@@ -269,6 +239,10 @@ public class View {
             text.setBackgroundColor(FILE_BACKGROUND_DEFAULT);
             text.setForegroundColor(FILE_FOREGROUND_DEFAULT);
             text.disableModifiers(SGR.BOLD);
+
+            // if thread is interrupted, return here so that the colors are set to default
+            if (Thread.currentThread().isInterrupted())
+                return;
         }
 
         // update screen
@@ -281,15 +255,22 @@ public class View {
 
     public void redrawCurrentFileContents(String fileContents) {
 
-        int startCol = screen.getTerminalSize().getColumns() - screen.getTerminalSize().getColumns() / FILE_SIZE;
+        int startCol = screen.getTerminalSize().getColumns() - screen.getTerminalSize().getColumns() / FILE_SIZE + 1;
         int endCol = screen.getTerminalSize().getColumns();
+
+        // flush old file
+        for (int i = 0; i < screen.getTerminalSize().getRows(); i++)
+            text.putString(startCol, i, " ".repeat(endCol - startCol));
+
+        // if thread is interrupted, do not waste any more time
+        if (Thread.currentThread().isInterrupted())
+            return;
 
         // sanitize input from control characters
         // replace tabs with spaces
         fileContents = fileContents.replaceAll("\t", " ".repeat(TABS_SPACES));
         // remove every control character that is not \n
         fileContents = fileContents.replaceAll("[\\x00-\\x09\\x0b\\x0c\\x0e-\\x1f\\x7f]", "");
-
 
         List<String> lines = Arrays.stream(fileContents.split("\n"))
                 .flatMap(line -> {
@@ -300,13 +281,14 @@ public class View {
                 })
                 .toList();
 
-        // flush old file
-        for (int i = 0; i < screen.getTerminalSize().getRows(); i++)
-            text.putString(startCol, i, " ".repeat(endCol - startCol));
-
         // draw file contents
-        for (int i = 0; i < (Math.min(lines.size(), screen.getTerminalSize().getRows())); i++)
+        for (int i = 0; i < (Math.min(lines.size(), screen.getTerminalSize().getRows())); i++) {
             text.putString(startCol, i, lines.get(i));
+
+            // if thread is interrupted, return
+            if (Thread.currentThread().isInterrupted())
+                return;
+        }
 
         try {
             screen.refresh();

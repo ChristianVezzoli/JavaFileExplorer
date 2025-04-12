@@ -6,35 +6,106 @@ public class Controller {
 
     private Model model;
 
+    private Thread thread;
+
     public Controller(Model model) {
         this.model = model;
     }
 
     public void selectNextFile() {
-        model.selectNextFile();
+        // interrupt old thread and wait for it to terminate
+        thread.interrupt();
+        try {
+            thread.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        // issue new instruction
+        thread = new Thread(() -> {
+            model.selectNextFile();
+        });
+        thread.start();
     }
 
     public void selectPreviousFile() {
-        model.selectPreviousFile();
+        // interrupt old thread and wait for it to terminate
+        thread.interrupt();
+        try {
+            thread.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        // issue new instruction
+        thread = new Thread(() -> {
+            model.selectPreviousFile();
+        });
+        thread.start();
     }
 
     public void startingLoadFiles() {
-        model.loadFiles();
+        thread = new Thread(() -> {
+            model.loadFiles();
+        });
+        thread.start();
     }
 
     public void goToSelectedDir() {
-        model.goToSelectedDir();
+        // interrupt old thread and wait for it to terminate
+        thread.interrupt();
+        try {
+            thread.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        // issue new instruction
+        thread = new Thread(() -> {
+            model.goToSelectedDir();
+        });
+        thread.start();
     }
 
     public void goToParentDir() {
-        model.goToParentDir();
+         // interrupt old thread and wait for it to terminate
+        thread.interrupt();
+        try {
+            thread.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        // issue new instruction
+        thread = new Thread(() -> {
+            model.goToParentDir();
+        });
+        thread.start();
     }
 
     public void getFiles() {
-        model.getFiles();
+        // interrupt old thread and wait for it to terminate
+        thread.interrupt();
+        try {
+            thread.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        // issue new instruction
+        thread = new Thread(() -> {
+            model.getFiles();
+        });
+        thread.start();
     }
 
     public void openFileManager() throws IOException {
-        model.openFileManager();
+        // interrupt old thread and wait for it to terminate
+        thread.interrupt();
+        try {
+            thread.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        // issue new instruction
+        thread = new Thread(() -> {
+            model.openFileManager();
+        });
+        thread.start();
     }
 }
