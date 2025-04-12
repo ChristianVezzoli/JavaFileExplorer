@@ -192,7 +192,6 @@ public class View {
         for (int i = Math.max(halfRow - currentFileIndex, 0);
                 i < (Math.min(halfRow + files.size() - currentFileIndex, 2 * halfRow));
                 i++) {
-
             // mark currently selected file (it's at halfRow)
             if (i == halfRow){
                 text.setBackgroundColor(FILE_BACKGROUND_CURRENT);
@@ -212,6 +211,10 @@ public class View {
             text.setBackgroundColor(FILE_BACKGROUND_DEFAULT);
             text.setForegroundColor(FILE_FOREGROUND_DEFAULT);
             text.disableModifiers(SGR.BOLD);
+
+            // if thread is interrupted, return here so that the colors are set to default
+            if (Thread.currentThread().isInterrupted())
+                return;
         }
 
 
@@ -269,6 +272,10 @@ public class View {
             text.setBackgroundColor(FILE_BACKGROUND_DEFAULT);
             text.setForegroundColor(FILE_FOREGROUND_DEFAULT);
             text.disableModifiers(SGR.BOLD);
+
+            // if thread is interrupted, return here so that the colors are set to default
+            if (Thread.currentThread().isInterrupted())
+                return;
         }
 
         // update screen
@@ -284,12 +291,19 @@ public class View {
         int startCol = screen.getTerminalSize().getColumns() - screen.getTerminalSize().getColumns() / FILE_SIZE;
         int endCol = screen.getTerminalSize().getColumns();
 
+        // flush old file
+        for (int i = 0; i < screen.getTerminalSize().getRows(); i++)
+            text.putString(startCol, i, " ".repeat(endCol - startCol));
+
+        // if thread is interrupted, do not waste any more time
+        if (Thread.currentThread().isInterrupted())
+            return;
+
         // sanitize input from control characters
         // replace tabs with spaces
         fileContents = fileContents.replaceAll("\t", " ".repeat(TABS_SPACES));
         // remove every control character that is not \n
         fileContents = fileContents.replaceAll("[\\x00-\\x09\\x0b\\x0c\\x0e-\\x1f\\x7f]", "");
-
 
         List<String> lines = Arrays.stream(fileContents.split("\n"))
                 .flatMap(line -> {
@@ -300,13 +314,14 @@ public class View {
                 })
                 .toList();
 
-        // flush old file
-        for (int i = 0; i < screen.getTerminalSize().getRows(); i++)
-            text.putString(startCol, i, " ".repeat(endCol - startCol));
-
         // draw file contents
-        for (int i = 0; i < (Math.min(lines.size(), screen.getTerminalSize().getRows())); i++)
+        for (int i = 0; i < (Math.min(lines.size(), screen.getTerminalSize().getRows())); i++) {
             text.putString(startCol, i, lines.get(i));
+
+            // if thread is interrupted, return
+            if (Thread.currentThread().isInterrupted())
+                return;
+        }
 
         try {
             screen.refresh();

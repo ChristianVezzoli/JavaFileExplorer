@@ -201,8 +201,12 @@ public class Model {
         this.overwriteCurrentFileContents();
     }
 
-    public void openFileManager() throws IOException {
+    public void openFileManager() {
         String[] args = new String[]{"xdg-open", currentFile.toString()};
-        new ProcessBuilder(args).start();
+        try {
+            new ProcessBuilder(args).start();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
