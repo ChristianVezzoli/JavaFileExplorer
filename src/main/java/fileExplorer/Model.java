@@ -109,7 +109,7 @@ public class Model {
                 if (currentFile.canRead()) {
                     currentFileContents = Arrays.stream(currentFile.listFiles())
                             .sorted(comparator)
-                            .map(File::getName)
+                            .map(file -> file.isFile() ? file.getName() : "DIR: " + file.getName())
                             .reduce("", (a, b) -> a + "\n" + b);
                 } else {
                     currentFileContents = "CAN'T READ DIRECTORY";

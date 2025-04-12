@@ -169,7 +169,7 @@ public class View {
     public void redrawParentDirectoryFiles(List<ViewFilePair> files, int currentFileIndex) {
 
         int startCol = 0;
-        int endCol = screen.getTerminalSize().getColumns() / PARENT_SIZE;
+        int endCol = screen.getTerminalSize().getColumns() / PARENT_SIZE - 1;
 
         // flush old files
         for (int i = 0; i < screen.getTerminalSize().getRows(); i++)
@@ -288,7 +288,7 @@ public class View {
 
     public void redrawCurrentFileContents(String fileContents) {
 
-        int startCol = screen.getTerminalSize().getColumns() - screen.getTerminalSize().getColumns() / FILE_SIZE;
+        int startCol = screen.getTerminalSize().getColumns() - screen.getTerminalSize().getColumns() / FILE_SIZE + 1;
         int endCol = screen.getTerminalSize().getColumns();
 
         // flush old file
